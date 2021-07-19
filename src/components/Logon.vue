@@ -57,7 +57,7 @@ export default {
 
 
         //wif 没有错申请登陆
-        console.log("请求以发出")
+
         let that;
         that = this;
         //签名

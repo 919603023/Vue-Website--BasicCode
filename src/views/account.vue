@@ -8,7 +8,7 @@
       </p>
     </div>
     <p>
-      <el-button @click="click"></el-button>
+
     </p>
   </div>
 </template>
@@ -20,15 +20,32 @@ export default {
   name: "account",
   data(){
     return{
-
+      timer:Object,
+      oldAddress:""
     }
   },
   computed: mapState([
     'user',
     'networkConfigs'
   ]),
+  setup() {
+
+  },
+  watch:{
+    user:  { handler (newV) {   //这个函数一个是输入的新值，一个是原来的值
+
+        if (newV.address !== "" && this.oldAddress  === "") {
+          this.getBalance()
+        }
+        this.oldAddress = newV.address
+      },
+      deep: true
+    },
+  },
+
   methods: {
-    click() {
+
+    getBalance() {
       if (this.user.address === "")
       {
         return
@@ -48,8 +65,14 @@ export default {
       // this.$store.commit('increment')
     }
 
-  }
-
+  },
+  mounted() {
+    let that = this
+    this.getBalance()
+    this.timer = setInterval(function (){
+      that.getBalance()
+    },600*1000)
+  },
 }
 </script>
 
