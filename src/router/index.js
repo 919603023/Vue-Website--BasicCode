@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
-
+import account from "@/views/account";
 const routes = [
   {
     path: '/',
@@ -16,7 +16,13 @@ const routes = [
     component: function () {
       return import(/* webpackChunkName: "about" */ '../views/About.vue')
     }
+  },
+  {
+    path: '/account',
+    name: 'Account',
+    component: account
   }
+
 ]
 
 const router = createRouter({

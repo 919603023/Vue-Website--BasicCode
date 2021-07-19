@@ -66,6 +66,9 @@ export default createStore({
     },
     setUserAddress(state,address){
       state.user.address = address;
+    },
+    setUserBalance(state,balance){
+      state.user.balance = balance
     }
 
   },
