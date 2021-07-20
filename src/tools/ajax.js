@@ -3,6 +3,8 @@ import axios from 'axios'
 import qs from 'qs'
 
 let portUrl = "https://api.sugarchain.org/";
+ portUrl = "https://api.blockcypher.com/v1/btc/test3/"
+let API = 'Bitcoin-test'
 //请求当前链信息
 export const getChainInfo = (callback) =>{
     let url = portUrl + "info";
@@ -14,12 +16,49 @@ export const getChainInfo = (callback) =>{
 }
 //请求 一个地址的余额
 export const getBalance = (address,callback) =>{
-    let url = portUrl + "balance" + "/" + address
+    let url = portUrl +"addrs/"+ address+ "/" + "balance"
     axios.get(url).then(data => {
 
         callback && callback(data.data)
     })
 }
+
+//请求 一个地址的可用输入
+export const getUnspent = (address) =>{
+    let url = portUrl + "addrs/" + address + "?includeScript=true"
+
+    return new Promise((resolve, reject) => {
+        axios.get(url).then(data => {
+            // console.log(data.dat)
+            resolve(data.data);
+        })
+
+    })
+}
+
+//提交 一个交易的广播
+export const callingNewEndpoint = (Json) => {
+    let url = portUrl + "txs/new";
+    return new Promise((resolve, reject) => {
+        axios.post(url,JSON.stringify(Json)).then(data => {
+            // console.log(data.dat)
+            resolve(data.data);
+        })
+
+    })
+}
+export const transactionBroadcast = (Json) => {
+    let url = portUrl + "txs/send";
+    return new Promise((resolve, reject) => {
+        axios.post(url,JSON.stringify(Json)).then(data => {
+            // console.log(data.dat)
+            resolve(data.data);
+        })
+
+    })
+}
+
+
 // 发送登陆请求 SendLogin
 // 请求头为：
 // 返回体为： {

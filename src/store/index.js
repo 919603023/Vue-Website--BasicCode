@@ -1,5 +1,6 @@
 import { createStore } from 'vuex'
-
+import * as bitcoin from 'bitcoinjs-lib'
+import {ECPair} from "bitcoinjs-lib";
 export default createStore({
   state: {
     count: 0,
@@ -9,6 +10,7 @@ export default createStore({
       address:"",
       balance:0,
       isLogin:false,
+      keyPair:ECPair,
     },
     networkConfigs : {
       'SUGAR': {
@@ -69,6 +71,9 @@ export default createStore({
     },
     setUserBalance(state,balance){
       state.user.balance = balance
+    },
+    setUserKeyPair(state,keypair){
+      state.user.keyPair = keypair
     }
 
   },

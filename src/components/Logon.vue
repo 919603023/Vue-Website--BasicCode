@@ -22,7 +22,10 @@ export default {
   name: "Logon",
   data(){
     return{
-      wif:"KxBP7fBxW5gxt3YKd2qeBb9ZP9pDdPQQtkCQhjjmXD2P4FsV4SGy",
+      // wif:"KxBP7fBxW5gxt3YKd2qeBb9ZP9pDdPQQtkCQhjjmXD2P4FsV4SGy",
+      wif:"cVvaG2Dky65wuGXFYhkbcsqUXpdVe7oUbkW932jxpBjweUD1Fbmz",
+      wif2:"cR3GjTpeCNUnhwhw3wwzLaTSkh5cAKpzkrTHpfMGqRnzvnPvLXYP",
+      MyServer:false,
     }
   },
   computed: mapState([
@@ -41,13 +44,14 @@ export default {
         let address ;
         let keyPair ;
         try {
-          keyPair = bitcoin.ECPair.fromWIF(this.wif,this.networkConfigs['SUGAR']["network"])
+          keyPair = bitcoin.ECPair.fromWIF(this.wif, bitcoin.networks.testnet)
 
-           address = bitcoin.payments.p2wpkh({
+           address = bitcoin.payments.p2pkh({
+            pubkey:keyPair.publicKey,
+             network:bitcoin.networks.testnet
+           });
 
-            'pubkey':keyPair.publicKey,
-            'network': this.networkConfigs['SUGAR']["network"],
-          });
+
         }
         catch (error)
         {
@@ -61,9 +65,9 @@ export default {
         let that;
         that = this;
         //签名
-
-        let msgHash = Sign(keyPair.privateKey.toString('hex'),"hello")
-        SendLogin(msgHash,"hello",keyPair.publicKey.toString('hex'),function (data){
+        if(this.MyServer == true){
+          let msgHash = Sign(keyPair.privateKey.toString('hex'),"hello")
+          SendLogin(msgHash,"hello",keyPair.publicKey.toString('hex'),function (data){
           //发送登陆请求
           console.log(data)
           if(data.status === "OK"){
@@ -71,13 +75,22 @@ export default {
             that.$store.commit('setUserLogon',true)
             that.$store.commit('setUserWif',that.wif)
             that.$store.commit('setUserAddress',address.address)
-            }
+            that.$store.commit('setUserKeyPair',keyPair)
+          }
           else {
             //登陆失败
             console.log("出错了",data.err)
 
           }
         })
+        }
+        else {
+          that.$store.commit('setUserLogon',true)
+          that.$store.commit('setUserWif',that.wif)
+          that.$store.commit('setUserAddress',address.address)
+          that.$store.commit('setUserKeyPair',keyPair)
+        }
+
       }
       else if (state == false)
       {
@@ -85,6 +98,7 @@ export default {
         this.$store.commit('setUserLogon',false) ;
         this.$store.commit('setUserWif',"")     ;
         this.$store.commit('setUserAddress',"");
+        this.$store.commit('setUserKeyPair',null)
       }
 
     }
