@@ -2,8 +2,8 @@ import axios from 'axios'
 
 import qs from 'qs'
 
-let portUrl = "https://api.sugarchain.org/";
- portUrl = "https://api.blockcypher.com/v1/btc/test3/"
+let sugarPortUrl = "https://api.sugarchain.org/";
+let portUrl = "https://api.blockcypher.com/v1/btc/test3/"
 let API = 'Bitcoin-test'
 //请求当前链信息
 export const getChainInfo = (callback) =>{
@@ -57,6 +57,23 @@ export const transactionBroadcast = (Json) => {
 
     })
 }
+
+
+
+export class SugarAjax {
+
+}
+SugarAjax.prototype.getUnspent = function (address,amount){
+    let url = sugarPortUrl + "unspent/" + address + "?amount=" + amount;
+    return new Promise((resolve, reject) => {
+        axios.get(url).then(data => {
+            resolve(data.data);
+        })
+
+    })
+}
+
+
 
 
 // 发送登陆请求 SendLogin

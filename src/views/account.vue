@@ -14,6 +14,7 @@
        <el-input  v-model="Send.SendFee"  ></el-input>
 
        <el-button @click="send">转账</el-button>
+       <el-button @click="SugarTest">测试</el-button>
      </div>
 
   </div>
@@ -22,7 +23,7 @@
 <script>
 import { mapState } from 'vuex'
 import { ref } from 'vue'
-import {callingNewEndpoint, getBalance, getUnspent, transactionBroadcast} from '../tools/ajax.js'
+import {callingNewEndpoint, getBalance, getUnspent, SugarAjax, transactionBroadcast} from '../tools/ajax.js'
 import {getScriptType} from "@/tools/bitcoin_tran.js";
 import {$} from "element-plus/es/utils/util";
 import {fromBase58Check,fromBech32} from "bitcoinjs-lib/src/address";
@@ -60,8 +61,77 @@ export default {
   },
 
   methods: {
-    update (val) {
-      this.$emit('input', val)
+    async  SugarTest()
+    {
+      //测试suger币的交易
+      //创建钥匙句柄
+      let fee = 10001;
+      let network = this.networkConfigs["SUGAR"]["network"]
+      let keyPair = bitcoin.ECPair.fromWIF("L5Q6qyMCS1NWKDMkGSLQ4GyGvtUUfDCSES1x4YuQGxahnjy4pxe9",network)
+      let payment = bitcoin.payments.p2wpkh({pubkey:keyPair.publicKey,network:network})
+      //目的地
+      let outaddress = [{address:payment.address,amount:500000}]
+
+      //获取输入
+      await  SugarAjax.prototype.getUnspent(payment.address, Number(outaddress[0].amount + fee)).then(data =>{
+        console.log(data.result)
+        console.log("结果共有：",data.result.length)
+        //创建付款句柄
+        let txb = new bitcoin.TransactionBuilder(network)
+        txb.setVersion(2)
+        let amount = 0;
+        let i = 0;
+        for (let j = 0 ; j < outaddress.length; j++ ){
+          amount = amount + outaddress[j].amount
+          txb.addOutput(outaddress[j].address, outaddress[j].amount)
+          console.log("增加输出：",outaddress[j].address,"金额:",outaddress[j].amount)
+        }
+        let value = 0;
+        for (let j = 0; j < data.result.length; j++){
+          // let txid = "5911091e6121b4dfc9792ca9bb26270967ceba1b277b5d3338f7efa774074ead"
+          // let index = 25
+          // let script = Buffer.from("001402c55b1ed693e90171bdd43545370aee0b9659e2", 'hex')
+          value = value + data.result[j].value
+          txb.addInput(data.result[j].txid,data.result[j].index,null,payment.output)
+          console.log("增加输入:",data.result[j].txid,"\n","index：",data.result[j].index,"\n","数量：",data.result[j].value)
+        }
+        let change = value - amount - fee
+        txb.addOutput(payment.address, change)
+        for (let j = 0; j < data.result.length; j++){
+          //bech32地址
+          txb.sign(j, keyPair, null, null, data.result[j].value, null)
+        }
+
+        let tx = txb.build()
+        console.log(tx.toHex())
+      })
+
+
+
+
+
+
+
+
+
+
+
+
+
+    },
+    test(){
+      let _msg = bitcoin.crypto.sha256(Buffer.from("hello"))
+      console.log(_msg)
+      // console.log(this.user.keyPair.privateKey.toString('hex'))
+      if(this.user.keyPair !== null){
+      let a = bitcoin.script.signature.encode(  this.user.keyPair.sign(_msg),0x01)
+        a[a.length - 1] = 0x03;
+      console.log("更改后为", a)
+        let sign = bitcoin.script.signature.decode(a)
+
+        console.log( this.user.keyPair.verify(_msg,sign.signature))
+
+      }
     },
     checkAddress(address){
       let back
