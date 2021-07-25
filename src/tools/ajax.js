@@ -72,7 +72,14 @@ SugarAjax.prototype.getUnspent = function (address,amount){
 
     })
 }
-
+SugarAjax.prototype.broadcast = function (hex){
+    let url = sugarPortUrl + "/broadcast"
+    return new Promise((resolve => {
+        axios.post(url,qs.stringify({raw:hex})).then(data => {
+            resolve(data.data)
+        })
+    }))
+}
 
 
 

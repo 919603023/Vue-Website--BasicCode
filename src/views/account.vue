@@ -13,8 +13,8 @@
        <el-input   v-model="Send.SendCount" ></el-input>
        <el-input  v-model="Send.SendFee"  ></el-input>
 
-       <el-button @click="send">转账</el-button>
-       <el-button @click="SugarTest">测试</el-button>
+       <el-button @click="SugarTest">转账</el-button>
+       <el-button @click="messageTest">测试</el-button>
      </div>
 
   </div>
@@ -22,6 +22,7 @@
 
 <script>
 import { mapState } from 'vuex'
+import { ElMessage } from 'element-plus'
 import { ref } from 'vue'
 import {callingNewEndpoint, getBalance, getUnspent, SugarAjax, transactionBroadcast} from '../tools/ajax.js'
 import {getScriptType} from "@/tools/bitcoin_tran.js";
@@ -61,8 +62,7 @@ export default {
   },
 
   methods: {
-    async  SugarTest()
-    {
+    async  SugarTest() {
       //测试suger币的交易
       //创建钥匙句柄
       let fee = 10001;
@@ -70,10 +70,10 @@ export default {
       let keyPair = bitcoin.ECPair.fromWIF("L5Q6qyMCS1NWKDMkGSLQ4GyGvtUUfDCSES1x4YuQGxahnjy4pxe9",network)
       let payment = bitcoin.payments.p2wpkh({pubkey:keyPair.publicKey,network:network})
       //目的地
-      let outaddress = [{address:payment.address,amount:500000}]
+      let outaddress = [{address:payment.address,amount:10000}]
 
       //获取输入
-      await  SugarAjax.prototype.getUnspent(payment.address, Number(outaddress[0].amount + fee)).then(data =>{
+      await  SugarAjax.prototype.getUnspent(payment.address, Number(outaddress[0].amount + fee)).then( async data =>  {
         console.log(data.result)
         console.log("结果共有：",data.result.length)
         //创建付款句柄
@@ -97,6 +97,7 @@ export default {
         }
         let change = value - amount - fee
         txb.addOutput(payment.address, change)
+        console.log("增加找零：",change)
         for (let j = 0; j < data.result.length; j++){
           //bech32地址
           txb.sign(j, keyPair, null, null, data.result[j].value, null)
@@ -104,6 +105,22 @@ export default {
 
         let tx = txb.build()
         console.log(tx.toHex())
+        await SugarAjax.prototype.broadcast(tx.toHex()).then(data =>{
+          console.log(data)
+              if (data.error == null){
+                //没有错误
+                //此次发送的交易hash 为
+                let result =  data.result
+                ElMessage.success({
+                  message: '恭喜你，交易已经完成<br>交易hash：'+ result,
+                  dangerouslyUseHTMLString:true,
+                  type: 'success'
+                });
+                //弹窗回执
+
+              }
+
+        })
       })
 
 
@@ -119,7 +136,7 @@ export default {
 
 
     },
-    test(){
+    Signtest(){
       let _msg = bitcoin.crypto.sha256(Buffer.from("hello"))
       console.log(_msg)
       // console.log(this.user.keyPair.privateKey.toString('hex'))
@@ -231,7 +248,16 @@ export default {
       //    getUnspent(this.user.address,0.1,function (data){
       //      console.log(data)
       //    })
-    }
+    },
+
+
+    messageTest(){
+      if (1 + 2 > 2 )
+        ElMessage.success({
+          message: '恭喜你，这是一条成功消息',
+          type: 'success'
+        });
+      }
   },
   mounted() {
     let that = this
