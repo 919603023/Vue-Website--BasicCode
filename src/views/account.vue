@@ -71,7 +71,27 @@ export default {
       let payment = bitcoin.payments.p2wpkh({pubkey:keyPair.publicKey,network:network})
       //目的地
       let outaddress = [{address:payment.address,amount:10000}]
+      const getScriptType = function (scriptHex){
+        let type = undefined
 
+        if (scriptHex[0] == bitcoin.opcodes.OP_0 &&
+            scriptHex[1] == 20) {
+          type = 'bech32'
+        }
+
+        if (scriptHex[0] == bitcoin.opcodes.OP_HASH160 &&
+            scriptHex[1] == 20) {
+          type = 'segwit'
+        }
+
+        if (scriptHex[0] == bitcoin.opcodes.OP_DUP &&
+            scriptHex[1] == bitcoin.opcodes.OP_HASH160 &&
+            scriptHex[2] == 20) {
+          type = 'legacy'
+        }
+
+        return type
+      }
       //获取输入
       await  SugarAjax.prototype.getUnspent(payment.address, Number(outaddress[0].amount + fee)).then( async data =>  {
         console.log(data.result)
@@ -92,15 +112,46 @@ export default {
           // let index = 25
           // let script = Buffer.from("001402c55b1ed693e90171bdd43545370aee0b9659e2", 'hex')
           value = value + data.result[j].value
-          txb.addInput(data.result[j].txid,data.result[j].index,null,payment.output)
+          switch(getScriptType(Buffer.from(data.result[j].script,"hex"))){
+            case 'bech32':
+              txb.addInput(data.result[j].txid,data.result[j].index,null,payment.output)
+            break;
+
+            default :
+              txb.addInput(data.result[j].txid,data.result[j].index)
+          }
+
           console.log("增加输入:",data.result[j].txid,"\n","index：",data.result[j].index,"\n","数量：",data.result[j].value)
         }
         let change = value - amount - fee
         txb.addOutput(payment.address, change)
         console.log("增加找零：",change)
         for (let j = 0; j < data.result.length; j++){
-          //bech32地址
-          txb.sign(j, keyPair, null, null, data.result[j].value, null)
+          console.log(getScriptType(Buffer.from(data.result[j].script,"hex")))
+          switch(getScriptType(Buffer.from(data.result[j].script,"hex"))){
+            case 'bech32':
+              txb.sign(j, keyPair, null, null, data.result[j].value, null)
+              break;
+            case 'segwit':
+              let value = data.result[j].value
+              let p2sh = bitcoin.payments.p2sh({
+                'redeem': payment,
+                'network': network
+              })
+              txb.sign(j, keyPair, p2sh.redeem.output, null, value, null)
+              break
+            case 'legacy':
+              txb.sign(j, keyPair,)
+              break
+
+            default:
+              ElMessage.success({
+                message: '交易出现未知错误',
+                type: 'success'
+              });
+              break
+          }
+
         }
 
         let tx = txb.build()
@@ -111,8 +162,17 @@ export default {
                 //没有错误
                 //此次发送的交易hash 为
                 let result =  data.result
+                //组回复包
+                let message = ' 恭喜你，交易已经完成' +
+                    '<br>' +
+                    '交易hash： ' +
+                    '<a href="https://sugar.wtf/#/transaction/' +
+                    result +
+                    '">'+
+                    result +
+                    '</a>'
                 ElMessage.success({
-                  message: '恭喜你，交易已经完成<br>交易hash：'+ result,
+                  message: message,
                   dangerouslyUseHTMLString:true,
                   type: 'success'
                 });
@@ -252,9 +312,18 @@ export default {
 
 
     messageTest(){
-      if (1 + 2 > 2 )
+      let result = 'b9c647b55604e30ac0cdd5aaf09b73b32304f0faf531e10b4dd19a0633cb3ebd'
+      let message = ' 恭喜你，交易已经完成' +
+          '<br>' +
+          '交易hash： ' +
+          '<a href="https://sugar.wtf/#/transaction/' +
+          result +
+          '">'+
+          result +
+          '</a>'
         ElMessage.success({
-          message: '恭喜你，这是一条成功消息',
+          message: message,
+          dangerouslyUseHTMLString:true,
           type: 'success'
         });
       }
