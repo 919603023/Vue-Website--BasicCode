@@ -168,7 +168,9 @@ export default {
                     '交易hash： ' +
                     '<a href="https://sugar.wtf/#/transaction/' +
                     result +
-                    '">'+
+                    "\"" +
+                    " target=\"_blank\" " +
+                    '>'+
                     result +
                     '</a>'
                 ElMessage.success({
@@ -318,9 +320,12 @@ export default {
           '交易hash： ' +
           '<a href="https://sugar.wtf/#/transaction/' +
           result +
-          '">'+
+          "\"" +
+          " target=\"_blank\" " +
+          '>'+
           result +
           '</a>'
+      console.log(message)
         ElMessage.success({
           message: message,
           dangerouslyUseHTMLString:true,
